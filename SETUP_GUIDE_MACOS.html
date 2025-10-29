@@ -1,0 +1,489 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Papers RAG System - macOS Setup Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+            margin-top: 25px;
+        }
+        
+        h3 {
+            color: #2c3e50;
+            margin-top: 20px;
+        }
+        
+        h4 {
+            color: #7f8c8d;
+            margin-top: 15px;
+        }
+        
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #e1e8ed;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: #333;
+        }
+        
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 16px 0;
+            padding: 0 16px;
+            color: #6a737d;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+        }
+        
+        th, td {
+            border: 1px solid #dfe2e5;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+        
+        ul, ol {
+            padding-left: 24px;
+        }
+        
+        li {
+            margin: 4px 0;
+        }
+        
+        strong {
+            color: #2c3e50;
+        }
+        
+        em {
+            color: #7f8c8d;
+        }
+        
+        .emoji {
+            font-style: normal;
+        }
+        
+        hr {
+            border: none;
+            border-top: 2px solid #ecf0f1;
+            margin: 30px 0;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 15px;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            
+            h1 {
+                font-size: 24px;
+                page-break-after: avoid;
+            }
+            
+            h2 {
+                font-size: 20px;
+                page-break-after: avoid;
+            }
+            
+            h3 {
+                font-size: 16px;
+                page-break-after: avoid;
+            }
+            
+            pre {
+                page-break-inside: avoid;
+                font-size: 10px;
+            }
+            
+            table {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 id="scientific-papers-rag-system-complete-macos-setup-guide">Scientific Papers RAG System - Complete macOS Setup Guide</h1>
+<p>A comprehensive guide to set up the Scientific Papers Retrieval-Augmented Generation (RAG) system on macOS from scratch, including all dependencies and configurations.</p>
+<h2 id="prerequisites">📋 Prerequisites</h2>
+<ul>
+<li><strong>macOS</strong>: 10.15 (Catalina) or later</li>
+<li><strong>Hardware</strong>: Mac with at least 8GB RAM (16GB+ recommended for better performance)</li>
+<li><strong>Storage</strong>: At least 10GB free space for dependencies and models</li>
+<li><strong>Internet</strong>: Stable connection for downloading dependencies</li>
+</ul>
+<h2 id="complete-installation-guide">🚀 Complete Installation Guide</h2>
+<h3 id="step-1-install-homebrew-package-manager">Step 1: Install Homebrew (Package Manager)</h3>
+<p>Open Terminal (Applications → Utilities → Terminal) and run:</p>
+<pre class="codehilite"><code class="language-bash">/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;
+</code></pre>
+
+<p>Follow the prompts and add Homebrew to your PATH when instructed.</p>
+<h3 id="step-2-install-python-314">Step 2: Install Python 3.14</h3>
+<pre class="codehilite"><code class="language-bash"># Install Python 3.14 via Homebrew
+brew install python@3.14
+
+# Verify installation
+python3 --version
+</code></pre>
+
+<p><strong>Expected output</strong>: <code>Python 3.14.x</code></p>
+<h3 id="step-3-install-ollama-local-llm-runtime">Step 3: Install Ollama (Local LLM Runtime)</h3>
+<pre class="codehilite"><code class="language-bash"># Install Ollama
+brew install ollama
+
+# Start Ollama service
+brew services start ollama
+
+# Verify Ollama is running
+ollama --version
+</code></pre>
+
+<h3 id="step-4-download-required-llm-models">Step 4: Download Required LLM Models</h3>
+<pre class="codehilite"><code class="language-bash"># Download Llama2 model (7B parameters, ~3.8GB)
+ollama pull llama2
+
+# Download LLaVA vision model (7B parameters, ~4.7GB)
+ollama pull llava
+
+# Verify models are installed
+ollama list
+</code></pre>
+
+<p><strong>Expected output</strong>:</p>
+<pre class="codehilite"><code>NAME     ID         SIZE     MODIFIED
+llama2   latest     3.8 GB   X minutes ago
+llava    latest     4.7 GB   X minutes ago
+</code></pre>
+
+<h3 id="step-5-install-python-dependencies">Step 5: Install Python Dependencies</h3>
+<pre class="codehilite"><code class="language-bash"># Install core dependencies
+pip3 install --upgrade pip
+
+# Install RAG system packages
+pip3 install faiss-cpu sentence-transformers ollama
+
+# Install PDF processing libraries
+pip3 install PyPDF2 pymupdf pdfplumber
+
+# Install LangChain for text processing
+pip3 install langchain langchain-community langchain-text-splitters
+
+# Install additional dependencies
+pip3 install numpy tqdm requests httpx pillow
+
+# Verify key installations
+python3 -c &quot;import faiss; print('FAISS: OK')&quot;
+python3 -c &quot;import sentence_transformers; print('SentenceTransformers: OK')&quot;
+python3 -c &quot;import ollama; print('Ollama client: OK')&quot;
+</code></pre>
+
+<h3 id="step-6-download-the-rag-system">Step 6: Download the RAG System</h3>
+<p>Choose one of these options:</p>
+<h4 id="option-a-download-from-github-if-available">Option A: Download from GitHub (if available)</h4>
+<pre class="codehilite"><code class="language-bash"># Clone the repository
+git clone &lt;repository-url&gt;
+cd docDatabase
+</code></pre>
+
+<h4 id="option-b-create-manually">Option B: Create manually</h4>
+<pre class="codehilite"><code class="language-bash"># Create project directory
+mkdir ~/Documents/docDatabase
+cd ~/Documents/docDatabase
+
+# Create the required directory structure
+mkdir -p papers data embeddings logs
+</code></pre>
+
+<p>Then download/copy these files to the project directory:
+- <code>rag_builder.py</code>
+- <code>rag_query.py</code> 
+- <code>utils.py</code>
+- <code>config.py</code>
+- <code>image_processor.py</code></p>
+<h3 id="step-7-verify-system-setup">Step 7: Verify System Setup</h3>
+<p>Test that everything is working:</p>
+<pre class="codehilite"><code class="language-bash">cd ~/Documents/docDatabase
+
+# Test Python imports
+python3 -c &quot;
+import faiss
+import sentence_transformers
+import ollama
+from utils import PDFProcessor
+print('✅ All imports successful!')
+&quot;
+
+# Test Ollama connection
+python3 -c &quot;
+import ollama
+client = ollama.Client()
+response = client.list()
+print('✅ Ollama connected, models:', [m['name'] for m in response['models']])
+&quot;
+</code></pre>
+
+<h2 id="usage-instructions">📚 Usage Instructions</h2>
+<h3 id="1-prepare-your-pdf-papers">1. Prepare Your PDF Papers</h3>
+<pre class="codehilite"><code class="language-bash"># Create papers directory if it doesn't exist
+mkdir -p ~/Documents/docDatabase/papers
+
+# Copy your PDF files to the papers directory
+cp /path/to/your/papers/*.pdf ~/Documents/docDatabase/papers/
+</code></pre>
+
+<h3 id="2-build-the-rag-database">2. Build the RAG Database</h3>
+<pre class="codehilite"><code class="language-bash">cd ~/Documents/docDatabase
+
+# Run the RAG builder (this will take several minutes)
+python3 rag_builder.py
+</code></pre>
+
+<p><strong>Expected process</strong>:
+- Processes each PDF (text extraction + image analysis)
+- Creates text embeddings using sentence-transformers
+- Saves FAISS vector database
+- Generates ~5-15 minutes for 5 PDFs</p>
+<h3 id="3-query-your-papers">3. Query Your Papers</h3>
+<pre class="codehilite"><code class="language-bash"># Start the interactive query system
+python3 rag_query.py
+</code></pre>
+
+<p><strong>Example queries</strong>:
+- "What machine learning algorithms are discussed?"
+- "Describe any graphs or charts in the papers"
+- "What are the main findings about deep learning?"
+- "Tell me about the experimental methodology"</p>
+<h3 id="4-monitor-system-resources">4. Monitor System Resources</h3>
+<pre class="codehilite"><code class="language-bash"># Check memory usage during processing
+top -pid $(pgrep python3)
+
+# Check available disk space
+df -h
+
+# Check Ollama status
+brew services list | grep ollama
+</code></pre>
+
+<h2 id="configuration-options">⚙️ Configuration Options</h2>
+<h3 id="memory-optimization">Memory Optimization</h3>
+<p>Edit <code>config.py</code> to adjust for your system:</p>
+<pre class="codehilite"><code class="language-python"># For 8GB RAM systems
+CHUNKING = {
+    &quot;chunk_size&quot;: 500,        # Smaller chunks
+    &quot;chunk_overlap&quot;: 50,      # Less overlap
+    &quot;min_chunk_size&quot;: 100
+}
+
+# For 16GB+ RAM systems  
+CHUNKING = {
+    &quot;chunk_size&quot;: 1000,       # Larger chunks
+    &quot;chunk_overlap&quot;: 100,     # More overlap
+    &quot;min_chunk_size&quot;: 200
+}
+</code></pre>
+
+<h3 id="disable-image-processing-if-needed">Disable Image Processing (if needed)</h3>
+<p>In <code>config.py</code>:</p>
+<pre class="codehilite"><code class="language-python">IMAGE_PROCESSING = {
+    &quot;enabled&quot;: False,  # Set to False to disable
+    # ... other settings
+}
+</code></pre>
+
+<h2 id="troubleshooting">🔧 Troubleshooting</h2>
+<h3 id="common-issues-and-solutions">Common Issues and Solutions</h3>
+<h4 id="1-command-not-found-python3">1. "Command not found: python3"</h4>
+<pre class="codehilite"><code class="language-bash"># Add Python to PATH
+echo 'export PATH=&quot;/usr/local/bin:$PATH&quot;' &gt;&gt; ~/.zshrc
+source ~/.zshrc
+</code></pre>
+
+<h4 id="2-modulenotfounderror-no-module-named-faiss">2. "ModuleNotFoundError: No module named 'faiss'"</h4>
+<pre class="codehilite"><code class="language-bash"># Reinstall with specific Python version
+python3 -m pip install faiss-cpu --force-reinstall
+</code></pre>
+
+<h4 id="3-ollama-connection-failed">3. "Ollama connection failed"</h4>
+<pre class="codehilite"><code class="language-bash"># Restart Ollama service
+brew services restart ollama
+
+# Check if running on correct port
+curl http://localhost:11434/api/version
+</code></pre>
+
+<h4 id="4-memory-error-during-processing">4. "Memory error during processing"</h4>
+<pre class="codehilite"><code class="language-bash"># Process fewer PDFs at once
+# Or increase swap space
+sudo sysctl vm.swapusage
+</code></pre>
+
+<h4 id="5-pdf-extraction-failed">5. "PDF extraction failed"</h4>
+<pre class="codehilite"><code class="language-bash"># Install additional PDF dependencies
+brew install poppler
+pip3 install pdfminer.six
+</code></pre>
+
+<h3 id="performance-optimization">Performance Optimization</h3>
+<h4 id="for-faster-processing">For Faster Processing:</h4>
+<pre class="codehilite"><code class="language-bash"># Use more CPU cores for embeddings
+export MKL_NUM_THREADS=4
+export OMP_NUM_THREADS=4
+
+# Run with higher priority
+sudo nice -n -10 python3 rag_builder.py
+</code></pre>
+
+<h4 id="for-lower-memory-usage">For Lower Memory Usage:</h4>
+<pre class="codehilite"><code class="language-bash"># Process PDFs individually
+python3 -c &quot;
+from rag_builder import RAGBuilderFAISS
+builder = RAGBuilderFAISS()
+builder.process_single_pdf('papers/your_paper.pdf')
+&quot;
+</code></pre>
+
+<h2 id="system-requirements-performance">📊 System Requirements &amp; Performance</h2>
+<h3 id="minimum-requirements">Minimum Requirements:</h3>
+<ul>
+<li><strong>RAM</strong>: 8GB (4GB for system + 4GB for models)</li>
+<li><strong>Storage</strong>: 5GB (models + dependencies)</li>
+<li><strong>CPU</strong>: Intel/Apple Silicon Mac</li>
+<li><strong>Time</strong>: ~2-3 minutes per PDF</li>
+</ul>
+<h3 id="recommended-requirements">Recommended Requirements:</h3>
+<ul>
+<li><strong>RAM</strong>: 16GB+ (better performance)</li>
+<li><strong>Storage</strong>: 10GB+ (room for more models)</li>
+<li><strong>CPU</strong>: Apple Silicon M1/M2/M3 (faster inference)</li>
+<li><strong>Time</strong>: ~1-2 minutes per PDF</li>
+</ul>
+<h3 id="expected-performance">Expected Performance:</h3>
+<ul>
+<li><strong>5 PDFs</strong>: ~10-15 minutes total processing</li>
+<li><strong>Memory Usage</strong>: ~3-5GB during processing</li>
+<li><strong>Database Size</strong>: ~50-100MB for embeddings</li>
+<li><strong>Query Speed</strong>: 2-5 seconds per question</li>
+</ul>
+<h2 id="updating-the-system">🔄 Updating the System</h2>
+<pre class="codehilite"><code class="language-bash"># Update Ollama
+brew update &amp;&amp; brew upgrade ollama
+
+# Update Python packages
+pip3 install --upgrade faiss-cpu sentence-transformers ollama langchain
+
+# Update models (if new versions available)
+ollama pull llama2
+ollama pull llava
+</code></pre>
+
+<h2 id="directory-structure">📁 Directory Structure</h2>
+<p>After setup, your directory should look like:</p>
+<pre class="codehilite"><code>~/Documents/docDatabase/
+├── papers/                    # Your PDF files
+│   ├── paper1.pdf
+│   ├── paper2.pdf
+│   └── ...
+├── embeddings/               # Generated vector database
+│   ├── faiss_index.bin
+│   └── document_store.pkl
+├── data/                     # Processed documents info
+│   └── processed_documents.json
+├── logs/                     # System logs
+├── rag_builder.py           # Main builder script
+├── rag_query.py            # Query interface
+├── utils.py                # Utility functions
+├── config.py               # Configuration
+├── image_processor.py      # Image analysis
+└── SETUP_GUIDE_MACOS.md   # This guide
+</code></pre>
+
+<h2 id="quick-start-summary">🎯 Quick Start Summary</h2>
+<p>For experienced users, here's the condensed version:</p>
+<pre class="codehilite"><code class="language-bash"># 1. Install dependencies
+/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;
+brew install python@3.14 ollama
+brew services start ollama
+
+# 2. Install Python packages
+pip3 install faiss-cpu sentence-transformers ollama PyPDF2 pymupdf pdfplumber langchain langchain-text-splitters
+
+# 3. Download models
+ollama pull llama2 &amp;&amp; ollama pull llava
+
+# 4. Setup project
+mkdir -p ~/Documents/docDatabase/{papers,data,embeddings,logs}
+cd ~/Documents/docDatabase
+# Copy RAG system files here
+
+# 5. Run system
+cp /path/to/your/papers/*.pdf papers/
+python3 rag_builder.py
+python3 rag_query.py
+</code></pre>
+
+<h2 id="support">📞 Support</h2>
+<p>If you encounter issues:</p>
+<ol>
+<li><strong>Check logs</strong>: Look in the <code>logs/</code> directory for detailed error messages</li>
+<li><strong>Verify versions</strong>: Ensure all components are compatible</li>
+<li><strong>Test components</strong>: Run individual tests for Python, Ollama, and dependencies</li>
+<li><strong>Resource monitoring</strong>: Use Activity Monitor to check CPU/memory usage</li>
+<li><strong>Clean reinstall</strong>: Remove and reinstall problematic components</li>
+</ol>
+<hr />
+<p>🎉 <strong>Congratulations!</strong> You now have a fully functional scientific papers RAG system with multimodal capabilities running locally on your Mac!</p>
+    
+    <hr>
+    <footer style="text-align: center; color: #7f8c8d; font-size: 0.9em; margin-top: 40px;">
+        <p>Scientific Papers RAG System - macOS Setup Guide</p>
+        <p>Generated from Markdown on 1761689208.2498236</p>
+    </footer>
+</body>
+</html>
