@@ -177,7 +177,7 @@ python3 rag_builder.py --rebuild
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+Apache License 2.0
 
 ---
 
