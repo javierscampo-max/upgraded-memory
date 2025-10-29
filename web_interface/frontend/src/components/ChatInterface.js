@@ -101,7 +101,10 @@ const ChatInterface = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Settings fontSize="small" />
           <FormControl sx={{ minWidth: 200 }}>
-            <FormLabel>Documents to retrieve: {k}</FormLabel>
+            <FormLabel>Relevant chunks to include: {k}</FormLabel>
+            <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: 1 }}>
+              Most similar document chunks to send as context
+            </Box>
             <Slider
               value={k}
               onChange={(e, newValue) => setK(newValue)}
