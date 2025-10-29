@@ -115,16 +115,53 @@ async def startup_event():
             rag_system_available = False
             return
         
-        # Try to get basic stats
-        system_stats = {
-            "total_vectors": 0,
-            "total_documents": 0, 
-            "embedding_dimension": 0,
-            "embedding_model": "all-MiniLM-L6-v2",
-            "llm_model": "Local LLM",
-            "index_location": str(faiss_index),
-            "status": "operational"
-        }
+        # Try to get basic stats by loading FAISS index and document info
+        try:
+            import faiss
+            import json
+            
+            # Load FAISS index to get real vector count
+            if faiss_index.exists():
+                index = faiss.read_index(str(faiss_index))
+                total_vectors = index.ntotal
+                embedding_dimension = index.d
+            else:
+                total_vectors = 0
+                embedding_dimension = 0
+            
+            # Load processed documents info to get real document count
+            processed_docs_file = base_dir / "data" / "processed_documents.json"
+            if processed_docs_file.exists():
+                with open(processed_docs_file, 'r') as f:
+                    processed_docs_info = json.load(f)
+                total_documents = processed_docs_info.get('total_documents', 0)
+            else:
+                total_documents = 0
+            
+            system_stats = {
+                "total_vectors": total_vectors,
+                "total_documents": total_documents, 
+                "embedding_dimension": embedding_dimension,
+                "embedding_model": "all-MiniLM-L6-v2",
+                "llm_model": "Local LLM",
+                "index_location": str(faiss_index),
+                "status": "operational"
+            }
+            
+            logger.info(f"Loaded real stats: {total_vectors} vectors, {total_documents} documents, {embedding_dimension}D embeddings")
+            
+        except Exception as e:
+            logger.warning(f"Could not load real statistics, using defaults: {e}")
+            # Fallback to default values if we can't load real stats
+            system_stats = {
+                "total_vectors": 0,
+                "total_documents": 0, 
+                "embedding_dimension": 0,
+                "embedding_model": "all-MiniLM-L6-v2",
+                "llm_model": "Local LLM",
+                "index_location": str(faiss_index),
+                "status": "operational"
+            }
         
         rag_system_available = True
         logger.info("RAG system files found and ready.")
