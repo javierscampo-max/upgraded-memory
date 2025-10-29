@@ -11,8 +11,9 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+import shutil
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -63,6 +64,29 @@ class DocumentInfo(BaseModel):
     title: str
     filename: str
     total_chunks: int
+
+
+class FileInfo(BaseModel):
+    id: int
+    filename: str
+    title: str
+    size: int
+    upload_date: str
+    processed: bool
+    vector_count: int
+
+
+class RAGStats(BaseModel):
+    total_files: int
+    total_vectors: int
+    total_size: int
+
+
+class UploadResponse(BaseModel):
+    filename: str
+    size: int
+    status: str
+    message: str
 
 
 # Initialize FastAPI app with lifespan
@@ -379,6 +403,259 @@ async def get_configuration():
             "batch_size": 32
         }
     }
+
+
+# RAG Management Endpoints
+@app.get("/api/rag/files", response_model=List[FileInfo])
+async def get_rag_files():
+    """Get list of files in the RAG system with detailed info"""
+    try:
+        base_dir = Path(__file__).parent.parent.parent
+        papers_dir = base_dir / "papers"
+        processed_docs_file = base_dir / "data" / "processed_documents.json"
+        
+        files_info = []
+        
+        if processed_docs_file.exists():
+            with open(processed_docs_file, 'r', encoding='utf-8') as f:
+                processed_docs = json.load(f)
+            
+            # Group by filename to count vectors and get info
+            file_stats = {}
+            for doc in processed_docs.get('documents', []):
+                filename = doc.get('filename', 'Unknown')
+                if filename not in file_stats:
+                    file_stats[filename] = {
+                        'title': doc.get('title', 'Unknown'),
+                        'vector_count': 0,
+                        'size': 0
+                    }
+                file_stats[filename]['vector_count'] += 1
+            
+            # Add file system info
+            file_id = 1
+            for filename, stats in file_stats.items():
+                file_path = papers_dir / filename
+                if file_path.exists():
+                    file_stat = file_path.stat()
+                    files_info.append(FileInfo(
+                        id=file_id,
+                        filename=filename,
+                        title=stats['title'],
+                        size=file_stat.st_size,
+                        upload_date=datetime.fromtimestamp(file_stat.st_mtime).isoformat(),
+                        processed=True,
+                        vector_count=stats['vector_count']
+                    ))
+                    file_id += 1
+        
+        return files_info
+        
+    except Exception as e:
+        logger.error(f"Failed to get RAG files: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get RAG files: {e}")
+
+
+@app.get("/api/rag/stats", response_model=RAGStats)
+async def get_rag_stats():
+    """Get RAG system statistics"""
+    try:
+        base_dir = Path(__file__).parent.parent.parent
+        papers_dir = base_dir / "papers"
+        
+        total_files = 0
+        total_size = 0
+        total_vectors = system_stats.get('total_vectors', 0)
+        
+        if papers_dir.exists():
+            for file_path in papers_dir.iterdir():
+                if file_path.is_file() and file_path.suffix.lower() in ['.pdf', '.txt', '.docx']:
+                    total_files += 1
+                    total_size += file_path.stat().st_size
+        
+        return RAGStats(
+            total_files=total_files,
+            total_vectors=total_vectors,
+            total_size=total_size
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to get RAG stats: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get RAG stats: {e}")
+
+
+@app.post("/api/rag/upload", response_model=List[UploadResponse])
+async def upload_files(files: List[UploadFile] = File(...)):
+    """Upload multiple files to the RAG system"""
+    try:
+        base_dir = Path(__file__).parent.parent.parent
+        papers_dir = base_dir / "papers"
+        papers_dir.mkdir(exist_ok=True)
+        
+        responses = []
+        allowed_extensions = {'.pdf', '.txt', '.docx'}
+        
+        for file in files:
+            try:
+                file_extension = Path(file.filename).suffix.lower()
+                
+                if file_extension not in allowed_extensions:
+                    responses.append(UploadResponse(
+                        filename=file.filename,
+                        size=0,
+                        status="error",
+                        message=f"Unsupported file type: {file_extension}"
+                    ))
+                    continue
+                
+                # Save file
+                file_path = papers_dir / file.filename
+                content = await file.read()
+                
+                with open(file_path, 'wb') as f:
+                    f.write(content)
+                
+                responses.append(UploadResponse(
+                    filename=file.filename,
+                    size=len(content),
+                    status="success",
+                    message="File uploaded successfully. Run rebuild to process."
+                ))
+                
+            except Exception as e:
+                responses.append(UploadResponse(
+                    filename=file.filename,
+                    size=0,
+                    status="error",
+                    message=f"Upload failed: {str(e)}"
+                ))
+        
+        return responses
+        
+    except Exception as e:
+        logger.error(f"File upload failed: {e}")
+        raise HTTPException(status_code=500, detail=f"File upload failed: {e}")
+
+
+@app.delete("/api/rag/files/{file_id}")
+async def delete_file(file_id: int):
+    """Delete a specific file from the RAG system"""
+    try:
+        base_dir = Path(__file__).parent.parent.parent
+        papers_dir = base_dir / "papers"
+        
+        # Get file info first
+        files_info = await get_rag_files()
+        file_to_delete = None
+        
+        for file_info in files_info:
+            if file_info.id == file_id:
+                file_to_delete = file_info
+                break
+        
+        if not file_to_delete:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Delete the actual file
+        file_path = papers_dir / file_to_delete.filename
+        if file_path.exists():
+            file_path.unlink()
+        
+        return {
+            "message": f"File {file_to_delete.filename} deleted successfully. Rebuild required to update embeddings.",
+            "filename": file_to_delete.filename
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"File deletion failed: {e}")
+        raise HTTPException(status_code=500, detail=f"File deletion failed: {e}")
+
+
+@app.post("/api/rag/rebuild")
+async def rebuild_rag_system():
+    """Rebuild the RAG system with current files"""
+    try:
+        base_dir = Path(__file__).parent.parent.parent
+        
+        # Run the RAG builder script
+        result = subprocess.run(
+            [sys.executable, "rag_builder.py"],
+            capture_output=True,
+            text=True,
+            cwd=str(base_dir),
+            timeout=300  # 5 minute timeout
+        )
+        
+        if result.returncode == 0:
+            # Reload system stats after rebuild
+            await startup_event()
+            return {
+                "status": "success",
+                "message": "RAG system rebuilt successfully",
+                "output": result.stdout
+            }
+        else:
+            return {
+                "status": "error", 
+                "message": "RAG rebuild failed",
+                "error": result.stderr
+            }
+            
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="RAG rebuild timed out")
+    except Exception as e:
+        logger.error(f"RAG rebuild failed: {e}")
+        raise HTTPException(status_code=500, detail=f"RAG rebuild failed: {e}")
+
+
+@app.post("/api/rag/reset")
+async def reset_rag_system():
+    """Reset the entire RAG system (delete all files and embeddings)"""
+    try:
+        base_dir = Path(__file__).parent.parent.parent
+        papers_dir = base_dir / "papers"
+        embeddings_dir = base_dir / "embeddings"
+        data_dir = base_dir / "data"
+        
+        # Remove all papers
+        if papers_dir.exists():
+            for file_path in papers_dir.iterdir():
+                if file_path.is_file():
+                    file_path.unlink()
+        
+        # Remove embeddings
+        if embeddings_dir.exists():
+            shutil.rmtree(embeddings_dir)
+            embeddings_dir.mkdir(exist_ok=True)
+        
+        # Remove processed documents data
+        processed_docs_file = data_dir / "processed_documents.json"
+        if processed_docs_file.exists():
+            processed_docs_file.unlink()
+        
+        # Reset global state
+        global rag_system_available, system_stats
+        rag_system_available = False
+        system_stats = {
+            "total_vectors": 0,
+            "total_documents": 0,
+            "embedding_dimension": 0,
+            "embedding_model": "all-MiniLM-L6-v2",
+            "llm_model": "Local LLM",
+            "index_location": "",
+            "status": "empty"
+        }
+        
+        return {
+            "status": "success",
+            "message": "RAG system reset successfully. All files and embeddings removed."
+        }
+        
+    except Exception as e:
+        logger.error(f"RAG reset failed: {e}")
+        raise HTTPException(status_code=500, detail=f"RAG reset failed: {e}")
 
 
 # Error handlers

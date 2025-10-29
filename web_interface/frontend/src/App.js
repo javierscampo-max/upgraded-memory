@@ -10,12 +10,17 @@ import {
   Grid,
   Paper,
   Alert,
-  Snackbar
+  Snackbar,
+  Tabs,
+  Tab,
+  Box,
+  Badge
 } from '@mui/material';
-import { Science, Chat } from '@mui/icons-material';
+import { Science, Chat, Settings, Folder } from '@mui/icons-material';
 
 import ChatInterface from './components/ChatInterface';
 import SystemStats from './components/SystemStats';
+import RAGManager from './components/RAGManager';
 import { checkHealth } from './services/api';
 
 const theme = createTheme({
@@ -33,6 +38,7 @@ const theme = createTheme({
 function App() {
   const [systemHealth, setSystemHealth] = useState(null);
   const [error, setError] = useState(null);
+  const [currentTab, setCurrentTab] = useState(0);
 
   useEffect(() => {
     // Check system health on startup
@@ -57,6 +63,23 @@ function App() {
     setError(null);
   };
 
+  const handleTabChange = (event, newValue) => {
+    setCurrentTab(newValue);
+  };
+
+  // Tab panel component
+  const TabPanel = ({ children, value, index, ...other }) => (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
+  );
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -68,28 +91,61 @@ function App() {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Scientific Papers RAG Query System
             </Typography>
-            <Chat sx={{ mr: 1 }} />
-            <Typography variant="body2">
-              {systemHealth?.status === 'healthy' ? 'Online' : 'Checking...'}
-            </Typography>
+            <Badge
+              color={systemHealth?.status === 'healthy' ? 'success' : 'error'}
+              variant="dot"
+              sx={{ mr: 2 }}
+            >
+              <Typography variant="body2">
+                {systemHealth?.status === 'healthy' ? 'Online' : 'Checking...'}
+              </Typography>
+            </Badge>
           </Toolbar>
+          
+          {/* Navigation Tabs */}
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
+            textColor="inherit"
+            indicatorColor="secondary"
+            sx={{ backgroundColor: 'primary.dark' }}
+          >
+            <Tab
+              icon={<Chat />}
+              label="Query Interface"
+              sx={{ textTransform: 'none' }}
+            />
+            <Tab
+              icon={<Folder />}
+              label="RAG Management"
+              sx={{ textTransform: 'none' }}
+            />
+          </Tabs>
         </AppBar>
 
         {/* Main Content */}
         <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
-          <Grid container spacing={3}>
-            {/* System Stats */}
-            <Grid item xs={12} md={4}>
-              <SystemStats />
-            </Grid>
+          {/* Query Interface Tab */}
+          <TabPanel value={currentTab} index={0}>
+            <Grid container spacing={3}>
+              {/* System Stats */}
+              <Grid item xs={12} md={4}>
+                <SystemStats />
+              </Grid>
 
-            {/* Chat Interface */}
-            <Grid item xs={12} md={8}>
-              <Paper elevation={2} sx={{ height: 'calc(100vh - 200px)' }}>
-                <ChatInterface />
-              </Paper>
+              {/* Chat Interface */}
+              <Grid item xs={12} md={8}>
+                <Paper elevation={2} sx={{ height: 'calc(100vh - 250px)' }}>
+                  <ChatInterface />
+                </Paper>
+              </Grid>
             </Grid>
-          </Grid>
+          </TabPanel>
+
+          {/* RAG Management Tab */}
+          <TabPanel value={currentTab} index={1}>
+            <RAGManager />
+          </TabPanel>
         </Container>
 
         {/* Error Snackbar */}

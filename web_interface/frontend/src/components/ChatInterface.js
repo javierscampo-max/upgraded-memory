@@ -16,7 +16,17 @@ import {
   Slider,
   FormControl,
   FormLabel,
-  Divider
+  Divider,
+  Pagination,
+  ToggleButtonGroup,
+  ToggleButton,
+  Tooltip,
+  Badge,
+  Collapse,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon
 } from '@mui/material';
 import {
   Send,
@@ -25,11 +35,211 @@ import {
   SmartToy,
   Description,
   AccessTime,
-  Settings
+  Settings,
+  ViewCompact,
+  ViewList,
+  Search,
+  FilterList,
+  ExpandLess,
+  Star
 } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 
 import { queryRAGSystem } from '../services/api';
+
+// Enhanced Sources Display Component for scalability
+const SourcesDisplay = ({ sources, maxHeight = '300px' }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState('compact'); // 'compact' or 'detailed'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAll, setShowAll] = useState(false);
+  
+  const SOURCES_PER_PAGE = 10;
+  const HIGH_RELEVANCE_THRESHOLD = 0.8; // Adjust based on your scoring system
+  
+  // Filter sources based on search term
+  const filteredSources = sources.filter(source =>
+    source.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    source.filename.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // Group sources by relevance
+  const highRelevanceSources = filteredSources.filter(s => s.similarity_score >= HIGH_RELEVANCE_THRESHOLD);
+  const regularSources = filteredSources.filter(s => s.similarity_score < HIGH_RELEVANCE_THRESHOLD);
+  
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredSources.length / SOURCES_PER_PAGE);
+  const startIndex = (currentPage - 1) * SOURCES_PER_PAGE;
+  const paginatedSources = filteredSources.slice(startIndex, startIndex + SOURCES_PER_PAGE);
+  
+  const getRelevanceColor = (score) => {
+    if (score >= HIGH_RELEVANCE_THRESHOLD) return 'success';
+    if (score >= 0.6) return 'warning';
+    return 'default';
+  };
+  
+  const getRelevanceIcon = (score) => {
+    if (score >= HIGH_RELEVANCE_THRESHOLD) return <Star fontSize="small" />;
+    return <Description fontSize="small" />;
+  };
+  
+  const renderSourceItem = (source, index, compact = false) => (
+    <Box
+      key={index}
+      sx={{
+        p: compact ? 1 : 1.5,
+        mb: 1,
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        backgroundColor: source.similarity_score >= HIGH_RELEVANCE_THRESHOLD ? 'success.50' : 'background.paper'
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: compact ? 0.5 : 1 }}>
+        {getRelevanceIcon(source.similarity_score)}
+        <Typography
+          variant={compact ? "caption" : "body2"}
+          fontWeight="bold"
+          sx={{ ml: 1, flex: 1 }}
+          noWrap={compact}
+        >
+          {source.title}
+        </Typography>
+        <Chip
+          size="small"
+          label={source.similarity_score?.toFixed(3)}
+          color={getRelevanceColor(source.similarity_score)}
+        />
+      </Box>
+      <Typography 
+        variant="caption" 
+        color="text.secondary"
+        sx={{ display: 'block', pl: compact ? 0 : 3 }}
+      >
+        {source.filename}
+      </Typography>
+    </Box>
+  );
+  
+  return (
+    <Box>
+      {/* Header with controls */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+        <Description sx={{ color: 'primary.main' }} />
+        <Typography variant="body2" sx={{ flex: 1 }}>
+          Sources ({sources.length})
+          {highRelevanceSources.length > 0 && (
+            <Chip
+              size="small"
+              icon={<Star />}
+              label={`${highRelevanceSources.length} highly relevant`}
+              color="success"
+              sx={{ ml: 1 }}
+            />
+          )}
+        </Typography>
+        
+        {sources.length > 10 && (
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(e, newMode) => newMode && setViewMode(newMode)}
+            size="small"
+          >
+            <ToggleButton value="compact">
+              <Tooltip title="Compact view">
+                <ViewCompact fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="detailed">
+              <Tooltip title="Detailed view">
+                <ViewList fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        )}
+      </Box>
+      
+      {/* Search bar for many sources */}
+      {sources.length > 5 && (
+        <TextField
+          size="small"
+          placeholder="Search sources..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1); // Reset pagination on search
+          }}
+          InputProps={{
+            startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
+          }}
+          sx={{ width: '100%', mb: 2 }}
+        />
+      )}
+      
+      {/* Sources container with scrolling */}
+      <Box
+        sx={{
+          maxHeight: sources.length > 20 ? maxHeight : 'auto',
+          overflowY: sources.length > 20 ? 'auto' : 'visible',
+          overflowX: 'hidden'
+        }}
+      >
+        {filteredSources.length === 0 ? (
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+            No sources match your search
+          </Typography>
+        ) : (
+          <>
+            {/* High relevance sources first (if any and not too many) */}
+            {highRelevanceSources.length > 0 && highRelevanceSources.length <= 5 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" color="success.main" sx={{ fontWeight: 'bold', mb: 1, display: 'block' }}>
+                  HIGHLY RELEVANT
+                </Typography>
+                {highRelevanceSources.map((source, index) => renderSourceItem(source, `high-${index}`, viewMode === 'compact'))}
+                {regularSources.length > 0 && <Divider sx={{ my: 1 }} />}
+              </Box>
+            )}
+            
+            {/* Paginated display for many sources */}
+            {filteredSources.length > SOURCES_PER_PAGE ? (
+              <>
+                {paginatedSources.map((source, index) => 
+                  renderSourceItem(source, startIndex + index, viewMode === 'compact')
+                )}
+                
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={(e, page) => setCurrentPage(page)}
+                    size="small"
+                    color="primary"
+                  />
+                </Box>
+              </>
+            ) : (
+              /* Show all for reasonable numbers */
+              (regularSources.length <= 5 || highRelevanceSources.length <= 5 ? 
+                filteredSources : 
+                (highRelevanceSources.length > 5 ? highRelevanceSources.concat(regularSources) : filteredSources)
+              ).map((source, index) => renderSourceItem(source, index, viewMode === 'compact'))
+            )}
+          </>
+        )}
+      </Box>
+      
+      {/* Summary for very large numbers */}
+      {sources.length > 50 && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
+          Showing {Math.min(filteredSources.length, SOURCES_PER_PAGE)} of {filteredSources.length} sources
+          {searchTerm && ` (filtered from ${sources.length} total)`}
+        </Typography>
+      )}
+    </Box>
+  );
+};
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
@@ -182,21 +392,12 @@ const ChatInterface = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Description sx={{ mr: 1 }} />
                             <Typography variant="body2">
-                              Sources ({message.sources.length})
+                              Retrieved Sources ({message.sources.length})
                             </Typography>
                           </Box>
                         </AccordionSummary>
                         <AccordionDetails>
-                          {message.sources.map((source, index) => (
-                            <Box key={index} sx={{ mb: 1 }}>
-                              <Typography variant="body2" fontWeight="bold">
-                                {source.title}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {source.filename} • Score: {source.similarity_score?.toFixed(3)}
-                              </Typography>
-                            </Box>
-                          ))}
+                          <SourcesDisplay sources={message.sources} maxHeight="400px" />
                         </AccordionDetails>
                       </Accordion>
                     )}

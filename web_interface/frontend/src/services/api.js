@@ -62,4 +62,52 @@ export const getConfiguration = async () => {
   return response.data;
 };
 
+// RAG Management API functions
+export const getRAGFiles = async () => {
+  const response = await api.get('/api/rag/files');
+  return response.data;
+};
+
+export const getRAGStats = async () => {
+  const response = await api.get('/api/rag/stats');
+  return response.data;
+};
+
+export const uploadFiles = async (files, onProgress = null) => {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('files', file);
+  });
+
+  const response = await api.post('/api/rag/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress) {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(percentCompleted);
+      }
+    },
+  });
+  return response.data;
+};
+
+export const deleteFile = async (fileId) => {
+  const response = await api.delete(`/api/rag/files/${fileId}`);
+  return response.data;
+};
+
+export const rebuildRAGSystem = async () => {
+  const response = await api.post('/api/rag/rebuild', {}, {
+    timeout: 300000, // 5 minutes for rebuild
+  });
+  return response.data;
+};
+
+export const resetRAGSystem = async () => {
+  const response = await api.post('/api/rag/reset');
+  return response.data;
+};
+
 export default api;
