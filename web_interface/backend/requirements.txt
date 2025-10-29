@@ -1,0 +1,17 @@
+# FastAPI Backend Requirements
+# Web framework and server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# CORS middleware (already included in FastAPI)
+# Data validation and serialization
+pydantic==2.5.0
+
+# Async support
+asyncio-throttle==1.0.2
+
+# Development tools
+python-multipart==0.0.6  # For form data handling if needed
+
+# Optional: Monitoring and logging
+structlog==23.2.0
