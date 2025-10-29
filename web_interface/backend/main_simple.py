@@ -44,9 +44,9 @@ class QueryResponse(BaseModel):
 
 
 class SystemStats(BaseModel):
-    total_vectors: int
-    total_documents: int
-    embedding_dimension: int
+    total_vectors: int = 0
+    total_documents: int = 0
+    embedding_dimension: int = 0
     embedding_model: str
     llm_model: str
     index_location: str
@@ -117,9 +117,9 @@ async def startup_event():
         
         # Try to get basic stats
         system_stats = {
-            "total_vectors": "Unknown",
-            "total_documents": "Unknown", 
-            "embedding_dimension": "Unknown",
+            "total_vectors": 0,
+            "total_documents": 0, 
+            "embedding_dimension": 0,
             "embedding_model": "all-MiniLM-L6-v2",
             "llm_model": "Local LLM",
             "index_location": str(faiss_index),
