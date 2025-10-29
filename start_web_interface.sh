@@ -66,7 +66,7 @@ if port_in_use 8000; then
     echo "Warning: Port 8000 is already in use. Backend may not start properly."
 fi
 
-python main.py &
+python main_simple.py &
 BACKEND_PID=$!
 
 echo "Backend started with PID: $BACKEND_PID"

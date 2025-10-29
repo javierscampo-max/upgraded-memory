@@ -26,4 +26,4 @@ pip install -r requirements.txt
 cd web_interface/backend
 echo "Starting FastAPI server on http://localhost:8000"
 echo "API documentation available at http://localhost:8000/docs"
-python main.py
+python main_simple.py

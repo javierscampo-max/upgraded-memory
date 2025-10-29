@@ -24,21 +24,10 @@ from config import LLM, EMBEDDINGS
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
-app = FastAPI(
-    title="RAG Query System API",
-    description="API for querying scientific papers using RAG (Retrieval-Augmented Generation)",
-    version="1.0.0"
-)
+# We'll initialize the app after defining lifespan
 
 # Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React dev server
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# (will be added after app initialization)
 
 # Global RAG engine instance
 rag_engine = None
@@ -80,8 +69,7 @@ class DocumentInfo(BaseModel):
     total_chunks: int
 
 
-# Initialize RAG engine on startup
-@app.on_event("startup")
+# Initialize RAG engine
 async def startup_event():
     global rag_engine
     try:
@@ -93,6 +81,34 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to initialize RAG engine: {e}")
         rag_engine = None
+
+# Use lifespan instead of on_event
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await startup_event()
+    yield
+    # Shutdown (if needed)
+    pass
+
+# Update app initialization
+app = FastAPI(
+    title="RAG Query System API",
+    description="API for querying scientific papers using RAG (Retrieval-Augmented Generation)",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # React dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # API Endpoints
@@ -264,4 +280,4 @@ async def general_exception_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
