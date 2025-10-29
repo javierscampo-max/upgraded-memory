@@ -1,6 +1,6 @@
 # Scientific Papers RAG System 🧠📚
 
-A powerful **Retrieval-Augmented Generation (RAG)** system for scientific papers with **multimodal capabilities** (text + images) running entirely locally on macOS.
+A powerful **Retrieval-Augmented Generation (RAG)** system for scientific papers with **multimodal capabilities** (text + images) running entirely locally.
 
 ## ✨ Features
 
