@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scientific Papers RAG Explorer</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        body {
+            margin: 0;
+            background: #f6f8fa;
+            color: #1f2328;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 3rem;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.9rem;
+            text-align: center;
+        }
+        section {
+            margin-top: 1.5rem;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.08);
+            padding: 1.5rem;
+        }
+        form {
+            display: grid;
+            gap: 1rem;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-size: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #d0d7de;
+            font-family: inherit;
+        }
+        label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 0.4rem;
+            border-radius: 8px;
+            border: 1px solid #d0d7de;
+            font-size: 1rem;
+        }
+        button {
+            justify-self: start;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.65rem 1.4rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: wait;
+        }
+        #answer {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        #sources {
+            list-style: none;
+            padding-left: 0;
+            margin: 0.75rem 0 0;
+        }
+        #sources li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        #sources span {
+            display: block;
+            color: #475569;
+            font-size: 0.92rem;
+        }
+        details {
+            margin-top: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+        }
+        details pre {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        }
+        .status {
+            margin-top: 0.5rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .error {
+            color: #b91c1c;
+        }
+        .stats-grid {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .stat-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        @media (max-width: 600px) {
+            section {
+                padding: 1.25rem;
+            }
+            label {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            input[type="number"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Scientific Papers Retrieval</h1>
+
+        <section id="stats-card">
+            <h2>System Status</h2>
+            <div id="stats-content" class="stats-grid">
+                <span>Loading system statistics…</span>
+            </div>
+        </section>
+
+        <section>
+            <h2>Ask a Question</h2>
+            <form id="query-form">
+                <label for="question">
+                    Question
+                    <textarea id="question" name="question" placeholder="e.g. What methodologies are used for feature selection?" required></textarea>
+                </label>
+                <label for="k">
+                    Retrieval depth (k)
+                    <input type="number" id="k" name="k" value="5" min="1" max="20">
+                </label>
+                <button type="submit" id="submit-btn">Ask</button>
+                <div id="status-message" class="status"></div>
+            </form>
+        </section>
+
+        <section id="result-card" hidden>
+            <h2>Answer</h2>
+            <div id="answer"></div>
+
+            <h3>Sources</h3>
+            <ul id="sources"></ul>
+
+            <details id="relevant-details" hidden>
+                <summary>View retrieved document chunks</summary>
+                <div id="relevant-docs"></div>
+            </details>
+        </section>
+    </div>
+
+    <script>
+        const statsContent = document.getElementById("stats-content");
+        const form = document.getElementById("query-form");
+        const questionInput = document.getElementById("question");
+        const kInput = document.getElementById("k");
+        const submitBtn = document.getElementById("submit-btn");
+        const statusMessage = document.getElementById("status-message");
+        const resultCard = document.getElementById("result-card");
+        const answerEl = document.getElementById("answer");
+        const sourcesEl = document.getElementById("sources");
+        const relevantDetails = document.getElementById("relevant-details");
+        const relevantDocsEl = document.getElementById("relevant-docs");
+
+        async function updateStats() {
+            try {
+                const response = await fetch("/stats");
+                if (!response.ok) throw new Error("Unable to load stats");
+                const data = await response.json();
+
+                statsContent.innerHTML = `
+                    <div class="stat-entry"><span>Total vectors</span><strong>${data.total_vectors}</strong></div>
+                    <div class="stat-entry"><span>Total documents</span><strong>${data.total_documents}</strong></div>
+                    <div class="stat-entry"><span>Embedding dimension</span><strong>${data.embedding_dimension}</strong></div>
+                    <div class="stat-entry"><span>Embedding model</span><strong>${data.embedding_model}</strong></div>
+                    <div class="stat-entry"><span>LLM</span><strong>${data.llm_model}</strong></div>
+                    <div class="stat-entry"><span>Index file</span><strong>${data.index_location}</strong></div>
+                `;
+            } catch (error) {
+                statsContent.innerHTML = `<span class="error">${error.message}</span>`;
+            }
+        }
+
+        function renderSources(sources) {
+            if (!sources.length) {
+                sourcesEl.innerHTML = "<li>No sources found.</li>";
+                return;
+            }
+
+            sourcesEl.innerHTML = "";
+            for (const source of sources) {
+                const item = document.createElement("li");
+                const title = source.title || "Unknown title";
+                const filename = source.filename || "Unknown file";
+                const score = typeof source.similarity_score === "number" ? source.similarity_score.toFixed(3) : "n/a";
+
+                item.innerHTML = `
+                    <strong>${title}</strong>
+                    <span>${filename} — chunk ${source.chunk_id ?? "?"} — similarity ${score}</span>
+                `;
+                sourcesEl.appendChild(item);
+            }
+        }
+
+        function renderRelevantDocs(docs) {
+            if (!docs.length) {
+                relevantDetails.hidden = true;
+                relevantDocsEl.innerHTML = "";
+                return;
+            }
+
+            relevantDetails.hidden = false;
+            relevantDocsEl.innerHTML = "";
+
+            docs.forEach((doc, index) => {
+                const wrapper = document.createElement("article");
+                wrapper.style.marginBottom = "1rem";
+                const meta = doc.metadata || {};
+                const header = document.createElement("header");
+                header.innerHTML = `
+                    <strong>Document ${index + 1}</strong>
+                    <div style="color:#475569;font-size:0.9rem;">
+                        ${meta.title || "Untitled"} — ${meta.filename || "unknown"} 
+                        (chunk ${meta.chunk_id ?? "?"}, similarity ${typeof doc.similarity_score === "number" ? doc.similarity_score.toFixed(3) : "n/a"})
+                    </div>
+                `;
+                const pre = document.createElement("pre");
+                pre.textContent = doc.content || "";
+
+                wrapper.appendChild(header);
+                wrapper.appendChild(pre);
+                relevantDocsEl.appendChild(wrapper);
+            });
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const question = questionInput.value.trim();
+            const k = Number(kInput.value) || 5;
+
+            if (!question) {
+                statusMessage.textContent = "Please enter a question.";
+                statusMessage.classList.add("error");
+                return;
+            }
+
+            statusMessage.textContent = "Thinking…";
+            statusMessage.classList.remove("error");
+            submitBtn.disabled = true;
+            resultCard.hidden = true;
+
+            try {
+                const response = await fetch("/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question, k }),
+                });
+
+                if (!response.ok) {
+                    const detail = await response.json().catch(() => ({}));
+                    const msg = detail.detail || `Request failed with status ${response.status}`;
+                    throw new Error(msg);
+                }
+
+                const data = await response.json();
+                answerEl.textContent = data.answer || "No answer returned.";
+                renderSources(data.sources || []);
+                renderRelevantDocs(data.relevant_docs || []);
+
+                resultCard.hidden = false;
+                statusMessage.textContent = "Done.";
+            } catch (error) {
+                statusMessage.textContent = error.message;
+                statusMessage.classList.add("error");
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        updateStats();
+    </script>
+</body>
+</html>
