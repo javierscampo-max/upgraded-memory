@@ -5,10 +5,8 @@ RAG Query: Query the RAG system using FAISS and local LLM
 import json
 import logging
 import pickle
-from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from sentence_transformers import SentenceTransformer
-import numpy as np
 import faiss
 
 # LLM integrations
@@ -18,12 +16,12 @@ except ImportError:
     ollama = None
 
 try:
-    from llama_cpp import Llama
+    from llama_cpp import Llama # type: ignore
 except ImportError:
     Llama = None
 
 try:
-    import openai
+    import openai # type: ignore
 except ImportError:
     openai = None
 

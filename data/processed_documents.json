@@ -1,37 +1,13 @@
 {
-  "total_documents": 5,
-  "total_chunks": 572,
+  "total_documents": 2,
+  "total_chunks": 254,
   "embedding_dimension": 384,
   "documents": [
-    {
-      "filename": "cs-963.pdf",
-      "title": "cs 963",
-      "total_chunks": 129,
-      "total_length": 125081,
-      "avg_chunk_length": 969,
-      "first_chunk_preview": "A survey of the state of the practice for research software in the United States JeffreyC.Carver1, NicWeber2, KarthikRam3, SandraGesing4 and DanielS.Katz5 1ComputerScience,UniversityofAlabama,Tuscaloo..."
-    },
-    {
-      "filename": "2406.pdf",
-      "title": "2406",
-      "total_chunks": 89,
-      "total_length": 87455,
-      "avg_chunk_length": 982,
-      "first_chunk_preview": "A Survey on Data Quality Dimensions and Tools for Machine Learning Invited Paper 1st Yuhan Zhou 2nd Fengjiao Tu 3rd Kewei Sha Dept. of Information Science Dept. of Information Science Dept. of Informa..."
-    },
-    {
-      "filename": "82593.pdf",
-      "title": "82593",
-      "total_chunks": 100,
-      "total_length": 99458,
-      "avg_chunk_length": 994,
-      "first_chunk_preview": "TOOLS AND RESOURCES Rapid protein stability prediction using deep learning representations Lasse M Blaabjerg1, Maher M Kassem2, Lydia L Good1, Nicolas Jonsson1, Matteo Cagiada1, Kristoffer E Johansson..."
-    },
     {
       "filename": "1.pdf",
       "title": "1",
       "total_chunks": 149,
-      "total_length": 143658,
+      "total_length": 143721,
       "avg_chunk_length": 964,
       "first_chunk_preview": "A Comprehensive Survey on Automated Machine Learning for Recommendations BOCHEN∗, HuaweiNoah’sArkLab,China XIANGYUZHAO∗, CityUniversityofHongKong,HK YEJINGWANG, CityUniversityofHongKong,HK WENQIFAN, T..."
     },
@@ -39,8 +15,8 @@
       "filename": "2.pdf",
       "title": "2",
       "total_chunks": 105,
-      "total_length": 100742,
-      "avg_chunk_length": 959,
+      "total_length": 101118,
+      "avg_chunk_length": 963,
       "first_chunk_preview": "PLOS ONE RESEARCHARTICLE Learning from climate change news: Is the world on the same page? StijnEikelboomID 1☯¤*,MarcEsteve-Del-ValleID 2☯¤,MalvinaNissim3☯¤ 1DepartmentofLanguageTechnology,FacultyofAr..."
     }
   ]
