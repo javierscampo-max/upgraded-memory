@@ -28,7 +28,22 @@ mkdir -p "${LOG_DIR}"
 
 cd "${ROOT_DIR}"
 
+# Check if virtual environment exists and activate it
+if [ -d "${ROOT_DIR}/venv" ]; then
+    echo "Activating virtual environment..."
+    source "${ROOT_DIR}/venv/bin/activate"
+    
+    # Set HuggingFace cache
+    export HF_HOME="${ROOT_DIR}/.cache/huggingface"
+    export TRANSFORMERS_CACHE="${ROOT_DIR}/.cache/huggingface"
+    
+    PYTHON_CMD="python"
+else
+    echo "Warning: Virtual environment not found. Using system Python."
+    PYTHON_CMD="python3"
+fi
+
 echo "Starting FastAPI server on ${HOST}:${PORT}..."
-python3 -m uvicorn fastapi_app:app --host "${HOST}" --port "${PORT}" >> "${LOG_FILE}" 2>&1 &
+${PYTHON_CMD} -m uvicorn fastapi_app:app --host "${HOST}" --port "${PORT}" >> "${LOG_FILE}" 2>&1 &
 SERVER_PID=$!
 echo "Server started (PID=${SERVER_PID}). Logs: ${LOG_FILE}"

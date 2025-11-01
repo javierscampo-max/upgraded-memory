@@ -65,20 +65,39 @@ else
     fi
 fi
 
-echo "📦 Installing Python dependencies..."
-pip3 install --upgrade pip
+echo "� Creating virtual environment..."
+if [ -d "venv" ]; then
+    echo "⚠️  Virtual environment already exists, skipping creation"
+else
+    python3 -m venv venv
+    echo "✅ Virtual environment created"
+fi
 
-# Install core dependencies
-pip3 install faiss-cpu sentence-transformers ollama
+# Activate virtual environment
+echo "🔌 Activating virtual environment..."
+source venv/bin/activate
 
-# Install PDF processing
-pip3 install PyPDF2 pymupdf pdfplumber
+echo "�📦 Installing Python dependencies in virtual environment..."
+pip install --upgrade pip
 
-# Install LangChain
-pip3 install langchain langchain-community langchain-text-splitters
+# Install all dependencies from requirements.txt
+if [ -f "requirements.txt" ]; then
+    echo "📋 Installing from requirements.txt..."
+    pip install -r requirements.txt
+else
+    echo "⚠️  requirements.txt not found, installing packages individually..."
+    # Install core dependencies
+    pip install faiss-cpu sentence-transformers ollama
 
-# Install additional utilities
-pip3 install pillow numpy tqdm requests httpx transformers python-dotenv pydantic
+    # Install PDF processing
+    pip install PyPDF2 pymupdf pdfplumber
+
+    # Install LangChain
+    pip install langchain langchain-community langchain-text-splitters
+
+    # Install additional utilities
+    pip install pillow numpy tqdm requests httpx transformers python-dotenv pydantic fastapi uvicorn
+fi
 
 echo "🤖 Downloading AI models..."
 
@@ -91,6 +110,25 @@ echo "📥 Downloading LLaVA vision model (~4.7GB)..."
 ollama pull llava
 
 echo "🔍 Verifying installation..."
+
+# Set up local HuggingFace cache
+echo "💾 Configuring HuggingFace cache..."
+mkdir -p .cache/huggingface
+export HF_HOME="$(pwd)/.cache/huggingface"
+export TRANSFORMERS_CACHE="$(pwd)/.cache/huggingface"
+
+# Create activation script with environment variables
+echo "📝 Creating activation script..."
+cat > activate_env.sh << 'EOF'
+#!/bin/bash
+# Activate virtual environment and set HuggingFace cache
+source venv/bin/activate
+export HF_HOME="$(pwd)/.cache/huggingface"
+export TRANSFORMERS_CACHE="$(pwd)/.cache/huggingface"
+echo "✅ Virtual environment activated with local HuggingFace cache"
+echo "📁 Cache location: $(pwd)/.cache/huggingface"
+EOF
+chmod +x activate_env.sh
 
 # Test Python imports
 python3 -c "
@@ -116,19 +154,35 @@ except Exception as e:
 echo "📁 Setting up project structure..."
 
 # Create required directories
-mkdir -p papers data embeddings logs
+mkdir -p papers data embeddings logs .cache/huggingface
+
+# Add venv and cache to .gitignore if it exists
+if [ -f ".gitignore" ]; then
+    if ! grep -q "^venv/" .gitignore; then
+        echo "venv/" >> .gitignore
+    fi
+    if ! grep -q "^.cache/" .gitignore; then
+        echo ".cache/" >> .gitignore
+    fi
+fi
 
 echo "✅ Setup complete!"
 echo ""
 echo "🎯 Next steps:"
-echo "1. Copy your PDF files to the 'papers/' directory:"
+echo "1. Activate the virtual environment (choose one):"
+echo "   source ./activate_env.sh         # Recommended (includes HuggingFace cache setup)"
+echo "   source venv/bin/activate         # Basic activation"
+echo ""
+echo "2. Copy your PDF files to the 'papers/' directory:"
 echo "   cp /path/to/your/papers/*.pdf papers/"
 echo ""
-echo "2. Build the RAG database:"
-echo "   python3 rag_builder.py"
+echo "3. Build the RAG database:"
+echo "   python rag_builder.py"
 echo ""
-echo "3. Start querying:"
-echo "   python3 rag_query.py"
+echo "4. Start querying:"
+echo "   python rag_query.py"
+echo ""
+echo "💡 Tip: Always use './activate_env.sh' to ensure HuggingFace cache is set correctly"
 echo ""
 echo "📚 For detailed instructions, see SETUP_GUIDE_MACOS.md"
 echo ""

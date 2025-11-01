@@ -7,16 +7,16 @@
       "filename": "1.pdf",
       "title": "1",
       "total_chunks": 149,
-      "total_length": 143721,
-      "avg_chunk_length": 964,
+      "total_length": 140010,
+      "avg_chunk_length": 939,
       "first_chunk_preview": "A Comprehensive Survey on Automated Machine Learning for Recommendations BOCHEN∗, HuaweiNoah’sArkLab,China XIANGYUZHAO∗, CityUniversityofHongKong,HK YEJINGWANG, CityUniversityofHongKong,HK WENQIFAN, T..."
     },
     {
       "filename": "2.pdf",
       "title": "2",
       "total_chunks": 105,
-      "total_length": 101118,
-      "avg_chunk_length": 963,
+      "total_length": 100365,
+      "avg_chunk_length": 955,
       "first_chunk_preview": "PLOS ONE RESEARCHARTICLE Learning from climate change news: Is the world on the same page? StijnEikelboomID 1☯¤*,MarcEsteve-Del-ValleID 2☯¤,MalvinaNissim3☯¤ 1DepartmentofLanguageTechnology,FacultyofAr..."
     }
   ]

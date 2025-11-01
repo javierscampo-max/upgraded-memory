@@ -13,12 +13,46 @@ A powerful **Retrieval-Augmented Generation (RAG)** system for scientific papers
 
 ## 🚀 Quick Start
 
-### For New Users (No Dependencies)
-- **[SETUP_GUIDE_MACOS.md](./SETUP_GUIDE_MACOS.md)** - Complete installation guide (Markdown)
-- **[SETUP_GUIDE_MACOS.pdf](./SETUP_GUIDE_MACOS.pdf)** - Printable PDF version (11 pages)
-- **[QUICK_START.md](./QUICK_START.md)** - 5-minute setup guide
+### Automated Setup (Recommended)
+```bash
+# One command to set up everything
+./install_macos.sh
 
-### For Users with Python/Ollama Installed
+# Activate the environment (always use this before running scripts)
+source ./activate_env.sh
+
+# Add your PDFs and build the database
+cp /path/to/your/papers/*.pdf papers/
+python rag_builder.py
+
+# Start querying
+python rag_query.py
+```
+
+### Manual Setup
+```bash
+# 1. Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# 2. Install Python packages
+pip install -r requirements.txt
+
+# 3. Set up HuggingFace cache
+export HF_HOME="$(pwd)/.cache/huggingface"
+export TRANSFORMERS_CACHE="$(pwd)/.cache/huggingface"
+
+# 4. Download LLM models
+ollama pull llama2 && ollama pull llava
+
+# 5. Add your PDFs and run
+mkdir -p papers
+cp your_papers.pdf papers/
+python rag_builder.py    # Build the database
+python rag_query.py      # Start querying
+```
+
+### For Users with Python/Ollama Installed (Legacy)
 ```bash
 # 1. Install Python packages
 pip3 install faiss-cpu sentence-transformers ollama PyPDF2 pymupdf pdfplumber langchain
@@ -30,6 +64,11 @@ ollama pull llama2 && ollama pull llava
 mkdir papers && cp your_papers.pdf papers/
 python3 rag_builder.py    # Build the database
 python3 rag_query.py      # Start querying
+```
+
+**⚠️ Important**: Always activate the environment before running scripts:
+```bash
+source ./activate_env.sh  # Sets up virtual environment + HuggingFace cache
 ```
 
 ## 📊 What It Does
